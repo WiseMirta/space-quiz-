@@ -1,164 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz with Timer</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #1F2937; /* Dark gray background */
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+    .quiz-container {
+        background-color: #111827;
+        padding: 20px 40px;
+        border-radius: 12px;
+        width: 400px;
+        text-align: center;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    button {
+        margin: 10px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    button:hover {
+        opacity: 0.8;
+    }
+    .answer-btn {
+        background-color: #3B82F6; /* Blue */
+        color: white;
+    }
+    .w-full {
+        width: 100%;
+    }
+    .rounded-full {
+        border-radius: 9999px;
+    }
+    .h-2 {
+        height: 8px;
+    }
+    .transition-all {
+        transition: all 1s linear;
+    }
+    .bg-white\/20 {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+</style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="text-white text-center mb-2">
+        Time Left: <span id="timer">30</span>s
+    </div>
+    <div class="w-full bg-white/20 rounded-full h-2 mb-4">
+        <div id="timerBar" class="bg-green-500 h-2 rounded-full transition-all"></div>
+    </div>
+
+    <div id="question">Question will appear here</div>
+    <div id="answers"></div>
+    <button id="nextBtn" style="display:none;">Next Question</button>
+</div>
+
 <script>
-    // Quiz data (unchanged)
-    const quizData = [ /* your 13 questions here */ ];
-
-    let currentQuestionIndex = 0;
-    let score = 0;
-    let playerName = '';
-    let selectedAnswer = null;
-    let players = JSON.parse(localStorage.getItem('quizPlayers') || '[]');
-    let playerCount = Math.floor(Math.random() * 45) + 5;
-
-    updatePlayerCount();
-    updateLeaderboard();
-
-    function updatePlayerCount() {
-        document.getElementById('playerCount').textContent = playerCount;
-        document.getElementById('completedCount').textContent = players.length;
+const quiz = [
+    {
+        question: "What is the capital of France?",
+        answers: ["Paris", "London", "Berlin", "Madrid"],
+        correct: "Paris"
+    },
+    {
+        question: "2 + 2 = ?",
+        answers: ["3", "4", "5", "6"],
+        correct: "4"
+    },
+    {
+        question: "Which planet is known as the Red Planet?",
+        answers: ["Earth", "Mars", "Venus", "Jupiter"],
+        correct: "Mars"
     }
+];
 
-    function startQuiz() {
-        const nameInput = document.getElementById('playerName');
-        playerName = nameInput.value.trim();
-        if (!playerName) {
-            alert('Please enter your name to start the quiz!');
-            return;
+let currentQuestion = 0;
+const QUESTION_TIME = 30;
+let timerInterval;
+
+function showQuestion() {
+    const q = quiz[currentQuestion];
+    document.getElementById('question').textContent = q.question;
+    const answersDiv = document.getElementById('answers');
+    answersDiv.innerHTML = '';
+
+    q.answers.forEach(ans => {
+        const btn = document.createElement('button');
+        btn.textContent = ans;
+        btn.className = 'answer-btn';
+        btn.onclick = () => selectAnswer(ans);
+        answersDiv.appendChild(btn);
+    });
+
+    document.getElementById('nextBtn').style.display = 'none';
+    startTimer();
+}
+
+function startTimer() {
+    clearInterval(timerInterval);
+    let timeLeft = QUESTION_TIME;
+    const timerBar = document.getElementById('timerBar');
+
+    document.getElementById('timer').textContent = timeLeft;
+    timerBar.style.width = '100%';
+    timerBar.style.backgroundColor = '#10B981'; // Green
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').textContent = timeLeft;
+
+        const percent = (timeLeft / QUESTION_TIME) * 100;
+        timerBar.style.width = percent + '%';
+
+        if (percent <= 30) timerBar.style.backgroundColor = '#F59E0B'; // Orange
+        if (percent <= 10) timerBar.style.backgroundColor = '#EF4444'; // Red
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            autoNext();
         }
+    }, 1000);
+}
 
-        playerCount++;
-        updatePlayerCount();
+function selectAnswer(ans) {
+    clearInterval(timerInterval);
+    const correct = quiz[currentQuestion].correct;
+    if (ans === correct) alert('Correct!');
+    else alert('Wrong! Correct answer: ' + correct);
+    document.getElementById('nextBtn').style.display = 'inline-block';
+}
 
-        document.getElementById('registrationScreen').classList.add('hidden');
-        document.getElementById('quizScreen').classList.remove('hidden');
-        document.getElementById('playerNameDisplay').textContent = playerName;
-        
-        loadQuestion();
+function autoNext() {
+    alert('Time up! Moving to next question.');
+    document.getElementById('nextBtn').style.display = 'inline-block';
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+    currentQuestion++;
+    if (currentQuestion < quiz.length) {
+        showQuestion();
+    } else {
+        alert('Quiz finished!');
+        location.reload(); // Restart quiz
     }
+});
 
-    function loadQuestion() {
-        const question = quizData[currentQuestionIndex];
-        document.getElementById('questionText').textContent = question.question;
-        document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
-        const progressPercent = ((currentQuestionIndex + 1) / quizData.length) * 100;
-        document.getElementById('progressBar').style.width = progressPercent + '%';
-
-        const answersContainer = document.getElementById('answersContainer');
-        answersContainer.innerHTML = '';
-        selectedAnswer = null;
-
-        question.options.forEach((option, index) => {
-            const button = document.createElement('button');
-            button.className = 'answer-btn w-full p-4 text-left bg-white/10 hover:bg-white/20 border border-white/30 rounded-lg text-white transition-all duration-300 hover:scale-105';
-            button.innerHTML = `<span class="font-semibold">${String.fromCharCode(65 + index)})</span> ${option}`;
-            button.onclick = () => selectAnswer(index, button);
-            answersContainer.appendChild(button);
-        });
-    }
-
-    function selectAnswer(answerIndex, buttonElement) {
-        if (selectedAnswer !== null) return; // Prevent multiple clicks
-        selectedAnswer = answerIndex;
-
-        document.querySelectorAll('.answer-btn').forEach(btn => {
-            btn.classList.remove('bg-purple-600', 'border-purple-400');
-            btn.classList.add('bg-white/10', 'border-white/30');
-        });
-
-        buttonElement.classList.remove('bg-white/10', 'border-white/30');
-        buttonElement.classList.add('bg-purple-600', 'border-purple-400');
-
-        setTimeout(checkAnswer, 1000);
-    }
-
-    function checkAnswer() {
-        const question = quizData[currentQuestionIndex];
-        const isCorrect = selectedAnswer === question.correct;
-
-        document.querySelectorAll('.answer-btn').forEach((btn, index) => {
-            btn.disabled = true;
-            if (index === question.correct) {
-                btn.classList.remove('bg-white/10', 'bg-purple-600');
-                btn.classList.add('bg-green-600');
-            } else if (index === selectedAnswer && !isCorrect) {
-                btn.classList.remove('bg-purple-600');
-                btn.classList.add('bg-red-600');
-            }
-        });
-
-        if (isCorrect) {
-            score++;
-            document.getElementById('currentScore').textContent = score;
-        }
-
-        setTimeout(() => {
-            currentQuestionIndex++;
-            if (currentQuestionIndex < quizData.length) {
-                loadQuestion();
-            } else {
-                showResults();
-            }
-        }, 2000);
-    }
-
-    function showResults() {
-        document.getElementById('quizScreen').classList.add('hidden');
-        document.getElementById('resultsScreen').classList.remove('hidden');
-
-        const percentage = Math.round((score / quizData.length) * 100);
-        document.getElementById('finalScore').textContent = `${score}/${quizData.length} (${percentage}%)`;
-
-        let emoji, message;
-        if (percentage >= 90) {
-            emoji = '🌟';
-            message = "Outstanding! You're a true space expert!";
-        } else if (percentage >= 75) {
-            emoji = '🚀';
-            message = "Excellent work! You know your space facts!";
-        } else if (percentage >= 60) {
-            emoji = '🌙';
-            message = "Good job! You have solid space knowledge!";
-        } else if (percentage >= 40) {
-            emoji = '🛸';
-            message = "Not bad! Keep exploring the cosmos!";
-        } else {
-            emoji = '🌍';
-            message = "Keep learning! The universe has much to teach!";
-        }
-
-        document.getElementById('resultEmoji').textContent = emoji;
-        document.getElementById('scoreMessage').textContent = message;
-
-        const playerResult = { name: playerName, score, percentage, timestamp: new Date().toISOString() };
-        players.push(playerResult);
-        players.sort((a, b) => b.score - a.score);
-        players = players.slice(0, 10);
-        localStorage.setItem('quizPlayers', JSON.stringify(players));
-
-        updatePlayerCount();
-        updateLeaderboard();
-    }
-
-    function updateLeaderboard() {
-        const leaderboard = document.getElementById('leaderboard');
-        leaderboard.innerHTML = '';
-        if (players.length === 0) {
-            leaderboard.innerHTML = '<div class="text-purple-200">No scores yet!</div>';
-            return;
-        }
-        players.forEach((player, index) => {
-            const entry = document.createElement('div');
-            entry.className = 'flex justify-between items-center text-white py-2 px-4 bg-white/5 rounded-lg';
-            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-            entry.innerHTML = `<span>${medal} ${player.name}</span><span class="font-bold">${player.score}/13 (${player.percentage}%)</span>`;
-            leaderboard.appendChild(entry);
-        });
-    }
-
-    function restartQuiz() {
-        currentQuestionIndex = 0;
-        score = 0;
-        document.getElementById('resultsScreen').classList.add('hidden');
-        document.getElementById('registrationScreen').classList.remove('hidden');
-        document.getElementById('playerName').value = '';
-    }
+showQuestion();
 </script>
+
+</body>
+</html>
