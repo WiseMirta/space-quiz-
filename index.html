@@ -3,394 +3,764 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Knowledge Quiz - 50 Players</title>
+    <title>Cosmic Quiz Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
         body {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(135deg, #0c0c2e 0%, #1a1a4a 50%, #2d1b69 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
         }
+        
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
         .star {
-            animation: twinkle 2s infinite;
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
         }
+        
         @keyframes twinkle {
             0%, 100% { opacity: 0.3; }
             50% { opacity: 1; }
         }
-        .quiz-card {
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        
+        .content {
+            position: relative;
+            z-index: 10;
         }
-        .progress-bar {
-            transition: width 0.3s ease;
+        
+        .cosmic-glow {
+            box-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
+        }
+        
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+        }
+        
+        .planet-1 {
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #ff6b6b, #ee5a24);
+            top: 10%;
+            right: 10%;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .planet-2 {
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, #4834d4, #686de0);
+            bottom: 20%;
+            left: 5%;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
         }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-x-hidden">
-    <!-- Animated stars background -->
-    <div class="absolute inset-0 overflow-hidden">
-        <div class="star absolute top-10 left-10 w-1 h-1 bg-white rounded-full"></div>
-        <div class="star absolute top-20 right-20 w-1 h-1 bg-white rounded-full" style="animation-delay: 0.5s;"></div>
-        <div class="star absolute top-40 left-1/4 w-1 h-1 bg-white rounded-full" style="animation-delay: 1s;"></div>
-        <div class="star absolute top-60 right-1/3 w-1 h-1 bg-white rounded-full" style="animation-delay: 1.5s;"></div>
-        <div class="star absolute bottom-20 left-1/2 w-1 h-1 bg-white rounded-full" style="animation-delay: 2s;"></div>
-        <div class="star absolute bottom-40 right-10 w-1 h-1 bg-white rounded-full" style="animation-delay: 0.8s;"></div>
-    </div>
+<body>
+    <div class="stars" id="stars"></div>
+    <div class="planet planet-1"></div>
+    <div class="planet planet-2"></div>
+    
+    <div class="content min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-4xl">
+            <!-- Welcome Screen -->
+            <div id="welcomeScreen" class="text-center">
+                <h1 class="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-8">
+                    🚀 COSMIC QUIZ CHALLENGE 🌌
+                </h1>
 
-    <div class="relative z-10 container mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">🚀 Space Knowledge Quiz</h1>
-            <p class="text-xl text-purple-200 mb-6">Test your cosmic knowledge with 13 challenging questions!</p>
-            <div class="flex justify-center items-center space-x-6 text-white">
-                <div class="text-center">
-                    <div class="text-2xl font-bold" id="playerCount">0</div>
-                    <div class="text-sm text-purple-200">Players Online</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold" id="completedCount">0</div>
-                    <div class="text-sm text-purple-200">Completed</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Player Registration -->
-        <div id="registrationScreen" class="max-w-md mx-auto quiz-card rounded-2xl p-8 mb-8">
-            <h2 class="text-2xl font-bold text-white mb-6 text-center">Join the Quiz</h2>
-            <div class="space-y-4">
-                <input type="text" id="playerName" placeholder="Enter your name" 
-                       class="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-purple-200 border border-white/30 focus:border-purple-400 focus:outline-none">
-                <button onclick="startQuiz()" 
-                        class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105">
-                    Start Quiz 🚀
-                </button>
-            </div>
-        </div>
-
-        <!-- Quiz Interface -->
-        <div id="quizScreen" class="hidden">
-            <!-- Progress Bar -->
-            <div class="max-w-4xl mx-auto mb-8">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-white font-semibold" id="playerNameDisplay"></span>
-                    <span class="text-purple-200">Question <span id="currentQuestion">1</span> of 13</span>
-                </div>
-                <div class="w-full bg-white/20 rounded-full h-3">
-                    <div class="progress-bar bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full" id="progressBar" style="width: 8.33%"></div>
-                </div>
-            </div>
-
-            <!-- Question Card -->
-            <div class="max-w-4xl mx-auto quiz-card rounded-2xl p-8 mb-8">
-                <h2 class="text-2xl font-bold text-white mb-6" id="questionText"></h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="answersContainer">
-                    <!-- Answers will be populated by JavaScript -->
-                </div>
-            </div>
-
-            <!-- Quiz Controls -->
-            <div class="max-w-4xl mx-auto text-center">
-                <div class="text-white mb-4">
-                    <span class="text-lg">Score: <span id="currentScore" class="font-bold text-yellow-400">0</span>/13</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Results Screen -->
-        <div id="resultsScreen" class="hidden max-w-4xl mx-auto">
-            <div class="quiz-card rounded-2xl p-8 text-center">
-                <div class="text-6xl mb-4" id="resultEmoji">🎉</div>
-                <h2 class="text-3xl font-bold text-white mb-4">Quiz Complete!</h2>
-                <div class="text-2xl text-yellow-400 font-bold mb-6" id="finalScore"></div>
-                <div class="text-lg text-purple-200 mb-8" id="scoreMessage"></div>
                 
-                <!-- Leaderboard -->
-                <div class="bg-white/10 rounded-xl p-6 mb-6">
-                    <h3 class="text-xl font-bold text-white mb-4">🏆 Leaderboard</h3>
-                    <div id="leaderboard" class="space-y-2">
-                        <!-- Leaderboard entries will be populated by JavaScript -->
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 cosmic-glow mb-8">
+                    <h2 class="text-2xl font-bold text-white mb-6">Enter Your Space Explorer Name</h2>
+                    <input type="text" id="playerName" placeholder="Captain Stardust" 
+                           class="w-full max-w-md px-6 py-3 bg-gray-700/50 border border-purple-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 mb-6">
+                    <br>
+                    <button onclick="joinQuiz()" 
+                            class="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 cosmic-glow">
+                        🚀 Join Multiplayer Mission
+                    </button>
+                </div>
+                
+                <div class="text-gray-400">
+                    <p>⭐ Points awarded for correct answers</p>
+                    <p>🏆 Winner announced at mission end</p>
+                </div>
+            </div>
+
+            <!-- Lobby Screen -->
+            <div id="lobbyScreen" class="hidden text-center">
+                <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400 mb-8">
+                    🛸 MISSION LOBBY 🛸
+                </h1>
+                
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 cosmic-glow mb-8">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-white mb-6">🚀 Mission Crew</h3>
+                        <div class="text-xl text-purple-300 mb-6">
+                            <span id="playerCount">0</span> / 50 Explorers Joined
+                        </div>
+                        <div id="playersList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6 max-h-80 overflow-y-auto"></div>
+                        
+                        <div class="bg-blue-600/20 border border-blue-400 rounded-lg p-4 mb-6">
+                            <p class="text-blue-300 font-bold mb-2">📱 Share this link to invite friends:</p>
+                            <div class="bg-gray-700/50 rounded-lg p-3 text-sm text-gray-300 break-all select-all cursor-pointer" onclick="copyToClipboard()" id="shareUrl">
+                                <span id="currentUrl"></span>
+                            </div>
+                            <p class="text-xs text-blue-400 mt-2">Click to copy • Share with other players to join the mission!</p>
+                        </div>
+                    </div>
+                    
+                    <div id="hostControls" class="hidden space-y-4">
+                        <button onclick="startMultiplayerQuiz()" 
+                                class="px-8 py-4 bg-gradient-to-r from-green-600 to-blue-600 text-white font-bold rounded-lg hover:from-green-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 cosmic-glow">
+                            🚀 Launch Quiz for All Explorers
+                        </button>
+                    </div>
+                    
+                    <div id="waitingMessage" class="text-yellow-400 font-bold">
+                        Waiting for mission commander to launch the quiz...
                     </div>
                 </div>
+            </div>
 
-                <button onclick="restartQuiz()" 
-                        class="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-8 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105">
-                    Take Quiz Again 🔄
-                </button>
+
+
+            <!-- Quiz Screen -->
+            <div id="quizScreen" class="hidden">
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 cosmic-glow">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="text-purple-400 font-bold">
+                            Question <span id="currentQuestion">1</span> of 14
+                        </div>
+                        <div class="text-yellow-400 font-bold">
+                            ⭐ Your Score: <span id="currentScore">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full bg-gray-700 rounded-full h-3 mb-4">
+                        <div id="progressBar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500" style="width: 7.69%"></div>
+                    </div>
+                    
+                    <div id="timerContainer" class="text-center mb-6">
+                        <div class="text-2xl font-bold text-red-400">
+                            ⏰ Time: <span id="timer">30</span>s
+                        </div>
+                    </div>
+                    
+                    <h2 id="questionText" class="text-2xl font-bold text-white mb-8 leading-relaxed"></h2>
+                    
+                    <div id="answersContainer" class="space-y-4 mb-8"></div>
+                    
+                    <div id="waitingForNext" class="hidden text-center text-yellow-400 font-bold">
+                        Waiting for all explorers to answer... 🚀
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Screen -->
+            <div id="resultsScreen" class="hidden text-center">
+                <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 mb-8">
+                    🏆 MISSION COMPLETE! 🏆
+                </h1>
+                
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 cosmic-glow mb-8">
+                    <h2 class="text-3xl font-bold text-white mb-6">Final Leaderboard</h2>
+                    <div class="text-lg text-purple-300 mb-6">
+                        <span id="totalParticipants">0</span> Space Explorers Completed the Mission
+                    </div>
+                    <div id="leaderboard" class="space-y-4 max-h-96 overflow-y-auto"></div>
+                </div>
+                
+                <div id="hostRestartControls" class="hidden">
+                    <button onclick="restartQuiz()" 
+                            class="px-8 py-4 bg-gradient-to-r from-green-600 to-blue-600 text-white font-bold rounded-lg hover:from-green-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 cosmic-glow">
+                        🔄 New Mission
+                    </button>
+                </div>
+                
+                <div id="playerWaitingMessage" class="text-yellow-400 font-bold">
+                    Mission complete! Waiting for commander to start new mission...
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         // Quiz data
-        const quizData = [
+        const questions = [
             {
                 question: "Which type of star can end its life in a pair-instability supernova?",
-                options: ["Red Dwarf", "Wolf–Rayet Star", "Neutron Star", "White Dwarf"],
+                answers: ["Red Dwarf", "Wolf–Rayet Star", "Neutron Star", "White Dwarf"],
                 correct: 1
             },
             {
                 question: "Which moon of Jupiter has the smoothest surface in the Solar System due to constant resurfacing by ice?",
-                options: ["Io", "Ganymede", "Callisto", "Europa"],
+                answers: ["Io", "Ganymede", "Callisto", "Europa"],
                 correct: 3
             },
             {
                 question: "What is the approximate radius of the observable universe?",
-                options: ["4.6 billion light-years", "13.8 billion light-years", "23.1 billion light-years", "46.5 billion light-years"],
+                answers: ["4.6 billion light-years", "13.8 billion light-years", "23.1 billion light-years", "46.5 billion light-years"],
                 correct: 3
             },
             {
                 question: "Which organism has been shown to survive direct exposure to the vacuum of space for over a week?",
-                options: ["Deinococcus radiodurans", "Tardigrades", "Halobacterium salinarum", "Bacillus subtilis"],
+                answers: ["Deinococcus radiodurans", "Tardigrades", "Halobacterium salinarum", "Bacillus subtilis"],
                 correct: 1
             },
             {
                 question: "Olympus Mons, the tallest known mountain in the Solar System, is located on:",
-                options: ["Mars", "Venus", "Io", "Ceres"],
-                correct: 0
+                answers: ["Mars", "Venus", "Io", "Ceres"],
+                correct: 0,
+                hasPlanets: true
             },
             {
                 question: "What was the first spacecraft to successfully land on the surface of Venus?",
-                options: ["Venera 7", "Mariner 10", "Pioneer Venus", "Vega 1"],
+                answers: ["Venera 7", "Mariner 10", "Pioneer Venus", "Vega 1"],
                 correct: 0
             },
             {
                 question: "In microgravity, the human heart over long-duration missions tends to:",
-                options: ["Become denser and stronger", "Lose mass and become more spherical", "Gain mass due to increased blood volume", "Shift position toward the lungs"],
+                answers: ["Become denser and stronger", "Lose mass and become more spherical", "Gain mass due to increased blood volume", "Shift position toward the lungs"],
                 correct: 1
             },
             {
                 question: "The largest canyon system in the Solar System, Valles Marineris, is located on:",
-                options: ["Mercury", "Mars", "Ganymede", "Earth"],
-                correct: 1
+                answers: ["Mercury", "Mars", "Ganymede", "Earth"],
+                correct: 1,
+                hasPlanets: true
             },
             {
                 question: "The \"space anemia\" observed in astronauts is caused by:",
-                options: ["Destruction of red blood cells due to radiation", "Reduced production of erythropoietin", "Redistribution of fluids causing altered red cell counts", "Accelerated breakdown of red blood cells"],
+                answers: ["Destruction of red blood cells due to radiation", "Reduced production of erythropoietin", "Redistribution of fluids causing altered red cell counts", "Accelerated breakdown of red blood cells"],
                 correct: 3
             },
             {
                 question: "Which galaxy cluster is the largest gravitationally bound structure known?",
-                options: ["Virgo Cluster", "Coma Cluster", "Hercules–Corona Borealis Great Wall", "Laniakea Supercluster"],
+                answers: ["Virgo Cluster", "Coma Cluster", "Hercules–Corona Borealis Great Wall", "Laniakea Supercluster"],
                 correct: 3
             },
             {
                 question: "Which moon of Saturn has liquid hydrocarbon lakes on its surface?",
-                options: ["Enceladus", "Titan", "Mimas", "Iapetus"],
-                correct: 1
-            },
-            {
-                question: "Which NASA experiment compared identical twins to study the effects of spaceflight on gene expression?",
-                options: ["BioSentinel", "Twins Study", "BioAstronautics Program", "GeneLab Pathfinder"],
+                answers: ["Enceladus", "Titan", "Mimas", "Iapetus"],
                 correct: 1
             },
             {
                 question: "Which is the best Portuguese pastry?",
-                options: ["Pastel de Nata", "Pastel de Tentúgal", "Bola de Berlim", "Bolo de Arroz"],
+                answers: ["Pastel de Nata", "Pastel de Tentúgal", "Bola de Berlim", "Bolo de Arroz"],
+                correct: 1,
+                hasImages: true
+            },
+            {
+                question: "Which NASA experiment compared identical twins to study the effects of spaceflight on gene expression?",
+                answers: ["BioSentinel", "Twins Study", "BioAstronautics Program", "GeneLab Pathfinder"],
                 correct: 1
+            },
+            {
+                question: "Where was the biggest wave ever surfed?",
+                answers: ["Nazaré, Portugal", "Ericeira, Portugal", "Peniche, Portugal", "Sagres, Portugal"],
+                correct: 0
             }
         ];
 
         // Game state
+        let allPlayers = [];
+        let currentPlayer = null;
         let currentQuestionIndex = 0;
-        let score = 0;
-        let playerName = '';
         let selectedAnswer = null;
-        let players = JSON.parse(localStorage.getItem('quizPlayers') || '[]');
-        let playerCount = Math.floor(Math.random() * 45) + 5; // Simulate 5-50 players
+        let isHost = false;
+        let gameState = 'lobby'; // lobby, playing, results
+        let questionTimer = null;
+        let timeLeft = 30;
 
-        // Initialize
-        updatePlayerCount();
-        updateLeaderboard();
-
-        function updatePlayerCount() {
-            document.getElementById('playerCount').textContent = playerCount;
-            document.getElementById('completedCount').textContent = players.length;
+        // Initialize stars
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = Math.random() * 3 + 1 + 'px';
+                star.style.height = star.style.width;
+                star.style.animationDelay = Math.random() * 3 + 's';
+                starsContainer.appendChild(star);
+            }
         }
 
-        function startQuiz() {
-            const nameInput = document.getElementById('playerName');
-            playerName = nameInput.value.trim();
-            
-            if (!playerName) {
-                alert('Please enter your name to start the quiz!');
+        function setupShareUrl() {
+            const currentUrl = window.location.href;
+            document.getElementById('currentUrl').textContent = currentUrl;
+        }
+
+        function copyToClipboard() {
+            const url = document.getElementById('currentUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                // Show feedback
+                const shareDiv = document.getElementById('shareUrl');
+                const originalClass = shareDiv.className;
+                shareDiv.className = originalClass + ' bg-green-600/30 border-green-400';
+                
+                setTimeout(() => {
+                    shareDiv.className = originalClass;
+                }, 1000);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            });
+        }
+
+        function joinQuiz() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) {
+                alert('Please enter your space explorer name!');
                 return;
             }
 
-            // Simulate new player joining
-            playerCount++;
-            updatePlayerCount();
+            // Check if name already exists
+            if (allPlayers.some(p => p.name === name)) {
+                alert('That explorer name is already taken! Choose another.');
+                return;
+            }
 
-            document.getElementById('registrationScreen').classList.add('hidden');
-            document.getElementById('quizScreen').classList.remove('hidden');
-            document.getElementById('playerNameDisplay').textContent = playerName;
+            // Check if lobby is full
+            if (allPlayers.length >= 50) {
+                alert('Mission is full! Maximum 50 explorers allowed.');
+                return;
+            }
+
+            currentPlayer = {
+                id: Date.now() + Math.random(),
+                name: name,
+                score: 0,
+                answers: [],
+                isReady: true
+            };
+
+            // First player becomes host
+            if (allPlayers.length === 0) {
+                isHost = true;
+            }
+
+            allPlayers.push(currentPlayer);
             
-            loadQuestion();
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('lobbyScreen').classList.remove('hidden');
+            
+            updateLobby();
         }
 
-        function loadQuestion() {
-            const question = quizData[currentQuestionIndex];
-            document.getElementById('questionText').textContent = question.question;
-            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
-            
-            const progressPercent = ((currentQuestionIndex + 1) / quizData.length) * 100;
-            document.getElementById('progressBar').style.width = progressPercent + '%';
 
-            const answersContainer = document.getElementById('answersContainer');
-            answersContainer.innerHTML = '';
+
+        function updateLobby() {
+            const playersList = document.getElementById('playersList');
+            const playerCount = document.getElementById('playerCount');
+            
+            playersList.innerHTML = '';
+            playerCount.textContent = allPlayers.length;
+
+            allPlayers.forEach(player => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'bg-gray-700/50 border border-purple-500 rounded-lg p-2 text-center text-sm';
+                playerDiv.innerHTML = `
+                    <div class="text-white font-bold">${player.name}</div>
+                    <div class="text-green-400 text-xs">✓ Ready</div>
+                `;
+                playersList.appendChild(playerDiv);
+            });
+
+            // Setup share URL when first player joins
+            if (allPlayers.length === 1) {
+                setupShareUrl();
+            }
+
+            // Show host controls if user is host and there are players
+            if (isHost && allPlayers.length > 0) {
+                document.getElementById('hostControls').classList.remove('hidden');
+                document.getElementById('waitingMessage').classList.add('hidden');
+            }
+        }
+
+
+
+        function startMultiplayerQuiz() {
+            if (!isHost) return;
+            
+            gameState = 'playing';
+            
+            document.getElementById('lobbyScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            
+            // Reset all player scores
+            allPlayers.forEach(player => {
+                player.score = 0;
+                player.answers = [];
+            });
+            
+            currentQuestionIndex = 0;
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestionIndex];
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+            document.getElementById('questionText').textContent = question.question;
+            document.getElementById('currentScore').textContent = currentPlayer.score;
+            
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+
+            const container = document.getElementById('answersContainer');
+            container.innerHTML = '';
             selectedAnswer = null;
 
-            question.options.forEach((option, index) => {
+            question.answers.forEach((answer, index) => {
                 const button = document.createElement('button');
-                button.className = 'answer-btn w-full p-4 text-left bg-white/10 hover:bg-white/20 border border-white/30 rounded-lg text-white transition-all duration-300 hover:scale-105';
-                button.innerHTML = `<span class="font-semibold">${String.fromCharCode(65 + index)})</span> ${option}`;
+                button.className = 'w-full p-4 text-left bg-gray-700/50 border border-gray-600 rounded-lg text-white hover:bg-purple-600/30 hover:border-purple-400 transition-all duration-200';
+                
+                if (question.hasImages) {
+                    // Create pastry images using high-quality photos
+                    let pastryImage = '';
+                    if (index === 0) { // Pastel de Nata
+                        pastryImage = `<img src="https://lmalimentar.pt/lojaLM/460-large_default/pastel-de-nata-cx-100-un.jpg" width="60" height="60" class="inline-block mr-3 rounded-lg object-cover" alt="Pastel de Nata">`;
+                    } else if (index === 1) { // Pastel de Tentúgal
+                        pastryImage = `<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdmN7TtKaWpYKLqrtEeSpHBsnDN1BJkdpDQA&s" width="60" height="60" class="inline-block mr-3 rounded-lg object-cover" alt="Pastel de Tentúgal">`;
+                    } else if (index === 2) { // Bola de Berlim
+                        pastryImage = `<img src="https://www.pingodoce.pt/wp-content/uploads/2017/09/bola-de-berlim.jpg" width="60" height="60" class="inline-block mr-3 rounded-lg object-cover" alt="Bola de Berlim">`;
+                    } else { // Bolo de Arroz
+                        pastryImage = `<img src="https://www.chefpanda.pt/wp-content/uploads/2020/11/Bolo-de-arroz.jpg" width="60" height="60" class="inline-block mr-3 rounded-lg object-cover" alt="Bolo de Arroz">`;
+                    }
+                    button.innerHTML = `<div class="flex items-center">${pastryImage}<span>${String.fromCharCode(65 + index)}. ${answer}</span></div>`;
+                } else if (question.hasPlanets) {
+                    // Add planet images for space questions
+                    let planetImage = '';
+                    const planetName = answer.toLowerCase();
+                    
+                    if (planetName.includes('venus')) {
+                        planetImage = `<img src="https://image.emojipng.com/220/2013220.jpg" width="60" height="60" class="inline-block mr-3 rounded-full object-cover" alt="Venus">`;
+                    } else if (planetName.includes('mars')) {
+                        planetImage = `<img src="https://attic.sh/wd5qfw2y4nm5e2fyq7n9ifpv36vn" width="60" height="60" class="inline-block mr-3 rounded-full object-cover" alt="Mars">`;
+                    } else if (planetName.includes('jupiter')) {
+                        planetImage = `<svg width="60" height="60" viewBox="0 0 60 60" class="inline-block mr-3">
+                            <circle cx="30" cy="30" r="25" fill="url(#jupiterGradient${index})" stroke="#DAA520" stroke-width="2"/>
+                            <defs>
+                                <radialGradient id="jupiterGradient${index}" cx="0.3" cy="0.3">
+                                    <stop offset="0%" stop-color="#F4A460"/>
+                                    <stop offset="100%" stop-color="#D2691E"/>
+                                </radialGradient>
+                            </defs>
+                            <ellipse cx="30" cy="22" rx="20" ry="3" fill="#CD853F" opacity="0.6"/>
+                            <ellipse cx="30" cy="30" rx="22" ry="2" fill="#A0522D" opacity="0.7"/>
+                            <ellipse cx="30" cy="38" rx="18" ry="2.5" fill="#8B4513" opacity="0.5"/>
+                            <circle cx="35" cy="25" r="4" fill="#B22222" opacity="0.8"/>
+                        </svg>`;
+                    } else if (planetName.includes('saturn')) {
+                        planetImage = `<svg width="60" height="60" viewBox="0 0 60 60" class="inline-block mr-3">
+                            <ellipse cx="30" cy="30" rx="35" ry="8" fill="none" stroke="#DAA520" stroke-width="2" opacity="0.7"/>
+                            <ellipse cx="30" cy="30" rx="30" ry="6" fill="none" stroke="#DAA520" stroke-width="1" opacity="0.5"/>
+                            <circle cx="30" cy="30" r="18" fill="url(#saturnGradient${index})" stroke="#DAA520" stroke-width="2"/>
+                            <defs>
+                                <radialGradient id="saturnGradient${index}" cx="0.3" cy="0.3">
+                                    <stop offset="0%" stop-color="#F0E68C"/>
+                                    <stop offset="100%" stop-color="#BDB76B"/>
+                                </radialGradient>
+                            </defs>
+                            <ellipse cx="30" cy="25" rx="15" ry="2" fill="#DAA520" opacity="0.4"/>
+                            <ellipse cx="30" cy="35" rx="12" ry="1.5" fill="#DAA520" opacity="0.3"/>
+                        </svg>`;
+                    } else if (planetName.includes('mercury')) {
+                        planetImage = `<img src="https://tse1.explicit.bing.net/th/id/OIP.2sZgza3B-m6lu7b0vBaEWQHaHa?rs=1&pid=ImgDetMain&o=7&rm=3" width="60" height="60" class="inline-block mr-3 rounded-full object-cover" alt="Mercury">`;
+                    } else if (planetName.includes('neptune')) {
+                        planetImage = `<svg width="60" height="60" viewBox="0 0 60 60" class="inline-block mr-3">
+                            <circle cx="30" cy="30" r="25" fill="url(#neptuneGradient${index})" stroke="#4169E1" stroke-width="2"/>
+                            <defs>
+                                <radialGradient id="neptuneGradient${index}" cx="0.3" cy="0.3">
+                                    <stop offset="0%" stop-color="#87CEEB"/>
+                                    <stop offset="100%" stop-color="#191970"/>
+                                </radialGradient>
+                            </defs>
+                            <circle cx="25" cy="28" r="3" fill="#00BFFF" opacity="0.6"/>
+                            <circle cx="38" cy="32" r="2" fill="#00BFFF" opacity="0.4"/>
+                        </svg>`;
+                    } else if (planetName.includes('uranus')) {
+                        planetImage = `<svg width="60" height="60" viewBox="0 0 60 60" class="inline-block mr-3">
+                            <circle cx="30" cy="30" r="25" fill="url(#uranusGradient${index})" stroke="#4FD0E7" stroke-width="2"/>
+                            <defs>
+                                <radialGradient id="uranusGradient${index}" cx="0.3" cy="0.3">
+                                    <stop offset="0%" stop-color="#E0FFFF"/>
+                                    <stop offset="100%" stop-color="#008B8B"/>
+                                </radialGradient>
+                            </defs>
+                            <ellipse cx="30" cy="30" rx="30" ry="5" fill="none" stroke="#4FD0E7" stroke-width="1" opacity="0.6" transform="rotate(45 30 30)"/>
+                            <ellipse cx="30" cy="30" rx="25" ry="4" fill="none" stroke="#4FD0E7" stroke-width="1" opacity="0.4" transform="rotate(45 30 30)"/>
+                        </svg>`;
+                    } else if (planetName.includes('earth')) {
+                        planetImage = `<img src="https://tse3.mm.bing.net/th/id/OIP.-bluNjlpoAL0dHd1xt92JAHaFN?rs=1&pid=ImgDetMain&o=7&rm=3" width="60" height="60" class="inline-block mr-3 rounded-full object-cover" alt="Earth">`;
+                    } else {
+                        // Default space icon for non-planet answers
+                        planetImage = `<svg width="60" height="60" viewBox="0 0 60 60" class="inline-block mr-3">
+                            <circle cx="30" cy="30" r="25" fill="url(#spaceGradient${index})" stroke="#4B0082" stroke-width="2"/>
+                            <defs>
+                                <radialGradient id="spaceGradient${index}" cx="0.3" cy="0.3">
+                                    <stop offset="0%" stop-color="#9370DB"/>
+                                    <stop offset="100%" stop-color="#2F1B69"/>
+                                </radialGradient>
+                            </defs>
+                            <circle cx="22" cy="22" r="1" fill="white"/>
+                            <circle cx="38" cy="25" r="0.8" fill="white"/>
+                            <circle cx="25" cy="38" r="1.2" fill="white"/>
+                            <circle cx="40" cy="40" r="0.6" fill="white"/>
+                        </svg>`;
+                    }
+                    button.innerHTML = `<div class="flex items-center">${planetImage}<span>${String.fromCharCode(65 + index)}. ${answer}</span></div>`;
+                } else {
+                    button.textContent = `${String.fromCharCode(65 + index)}. ${answer}`;
+                }
+                
                 button.onclick = () => selectAnswer(index, button);
-                answersContainer.appendChild(button);
-            });
-        }
-
-        function selectAnswer(answerIndex, buttonElement) {
-            // Remove previous selection
-            document.querySelectorAll('.answer-btn').forEach(btn => {
-                btn.classList.remove('bg-purple-600', 'border-purple-400');
-                btn.classList.add('bg-white/10', 'border-white/30');
+                container.appendChild(button);
             });
 
-            // Highlight selected answer
-            buttonElement.classList.remove('bg-white/10', 'border-white/30');
-            buttonElement.classList.add('bg-purple-600', 'border-purple-400');
+            document.getElementById('waitingForNext').classList.add('hidden');
             
-            selectedAnswer = answerIndex;
-
-            // Auto-advance after 1 second
-            setTimeout(() => {
-                checkAnswer();
+            // Start timer
+            timeLeft = 30;
+            updateTimer();
+            questionTimer = setInterval(() => {
+                timeLeft--;
+                updateTimer();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(questionTimer);
+                    if (selectedAnswer === null) {
+                        // Auto-submit with no answer
+                        selectAnswer(-1, null);
+                    }
+                }
             }, 1000);
         }
 
-        function checkAnswer() {
-            if (selectedAnswer === null) return;
-
-            const question = quizData[currentQuestionIndex];
-            const isCorrect = selectedAnswer === question.correct;
-
-            // Show correct/incorrect feedback
-            document.querySelectorAll('.answer-btn').forEach((btn, index) => {
-                if (index === question.correct) {
-                    btn.classList.remove('bg-white/10', 'bg-purple-600');
-                    btn.classList.add('bg-green-600');
-                } else if (index === selectedAnswer && !isCorrect) {
-                    btn.classList.remove('bg-purple-600');
-                    btn.classList.add('bg-red-600');
-                }
-                btn.disabled = true;
-            });
-
-            if (isCorrect) {
-                score++;
-                document.getElementById('currentScore').textContent = score;
+        function updateTimer() {
+            const timerElement = document.getElementById('timer');
+            timerElement.textContent = timeLeft;
+            
+            if (timeLeft <= 10) {
+                timerElement.className = 'text-red-500 animate-pulse';
+            } else if (timeLeft <= 20) {
+                timerElement.className = 'text-yellow-400';
+            } else {
+                timerElement.className = 'text-green-400';
             }
-
-            // Move to next question after 2 seconds
-            setTimeout(() => {
-                currentQuestionIndex++;
-                if (currentQuestionIndex < quizData.length) {
-                    loadQuestion();
-                } else {
-                    showResults();
-                }
-            }, 2000);
         }
 
-        function showResults() {
+        function selectAnswer(answerIndex, buttonElement) {
+            if (selectedAnswer !== null) return; // Already answered
+            
+            clearInterval(questionTimer);
+            selectedAnswer = answerIndex;
+            const question = questions[currentQuestionIndex];
+            const isCorrect = answerIndex === question.correct && answerIndex !== -1;
+
+            // Calculate points based on time remaining (bonus for speed)
+            let points = 0;
+            if (isCorrect) {
+                points = 10 + Math.floor(timeLeft / 3); // Base 10 + speed bonus
+            }
+
+            currentPlayer.score += points;
+
+            // Always show correct answer highlighting
+            const allButtons = document.querySelectorAll('#answersContainer button');
+            
+            // Reset all buttons first
+            allButtons.forEach(btn => {
+                btn.classList.remove('bg-green-600/50', 'bg-red-600/50', 'border-green-400', 'border-red-400');
+                btn.classList.add('bg-gray-700/50', 'border-gray-600');
+            });
+
+            // Highlight the correct answer in green
+            allButtons[question.correct].classList.remove('bg-gray-700/50', 'border-gray-600');
+            allButtons[question.correct].classList.add('bg-green-600/50', 'border-green-400');
+
+            // If user selected an answer and it was wrong, show it in red
+            if (answerIndex !== -1 && buttonElement && !isCorrect) {
+                buttonElement.classList.remove('bg-gray-700/50', 'border-gray-600');
+                buttonElement.classList.add('bg-red-600/50', 'border-red-400');
+            }
+
+            // Disable all buttons
+            document.querySelectorAll('#answersContainer button').forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('cursor-not-allowed');
+            });
+
+            currentPlayer.answers.push({
+                question: currentQuestionIndex,
+                selected: answerIndex,
+                correct: question.correct,
+                isCorrect: isCorrect,
+                points: points,
+                timeUsed: 30 - timeLeft
+            });
+
+            document.getElementById('currentScore').textContent = currentPlayer.score;
+            document.getElementById('waitingForNext').classList.remove('hidden');
+            
+            // Auto-advance after 3 seconds
+            setTimeout(() => {
+                nextQuestion();
+            }, 3000);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex >= questions.length) {
+                finishQuiz();
+            } else {
+                showQuestion();
+            }
+        }
+
+        function finishQuiz() {
+            gameState = 'results';
+            
+            // Sort all players by score (highest first)
+            allPlayers.sort((a, b) => b.score - a.score);
+            
             document.getElementById('quizScreen').classList.add('hidden');
             document.getElementById('resultsScreen').classList.remove('hidden');
-
-            const percentage = Math.round((score / quizData.length) * 100);
-            document.getElementById('finalScore').textContent = `${score}/${quizData.length} (${percentage}%)`;
-
-            let emoji, message;
-            if (percentage >= 90) {
-                emoji = '🌟';
-                message = 'Outstanding! You\'re a true space expert!';
-            } else if (percentage >= 75) {
-                emoji = '🚀';
-                message = 'Excellent work! You know your space facts!';
-            } else if (percentage >= 60) {
-                emoji = '🌙';
-                message = 'Good job! You have solid space knowledge!';
-            } else if (percentage >= 40) {
-                emoji = '🛸';
-                message = 'Not bad! Keep exploring the cosmos!';
-            } else {
-                emoji = '🌍';
-                message = 'Keep learning! The universe has much to teach!';
-            }
-
-            document.getElementById('resultEmoji').textContent = emoji;
-            document.getElementById('scoreMessage').textContent = message;
-
-            // Save player result
-            const playerResult = {
-                name: playerName,
-                score: score,
-                percentage: percentage,
-                timestamp: new Date().toISOString()
-            };
-
-            players.push(playerResult);
-            players.sort((a, b) => b.score - a.score);
-            players = players.slice(0, 10); // Keep top 10
-            localStorage.setItem('quizPlayers', JSON.stringify(players));
-
-            updatePlayerCount();
-            updateLeaderboard();
+            
+            showLeaderboard();
         }
 
-        function updateLeaderboard() {
+        function showLeaderboard() {
             const leaderboard = document.getElementById('leaderboard');
-            if (!leaderboard) return;
-
+            const totalParticipants = document.getElementById('totalParticipants');
+            
             leaderboard.innerHTML = '';
+            totalParticipants.textContent = allPlayers.length;
 
-            if (players.length === 0) {
-                leaderboard.innerHTML = '<div class="text-purple-200">No scores yet!</div>';
-                return;
+            allPlayers.forEach((player, index) => {
+                const position = index + 1;
+                let medal = '';
+                let bgColor = 'bg-gray-700/50';
+                
+                if (position === 1) {
+                    medal = '🥇';
+                    bgColor = 'bg-gradient-to-r from-yellow-600/30 to-yellow-500/30';
+                } else if (position === 2) {
+                    medal = '🥈';
+                    bgColor = 'bg-gradient-to-r from-gray-400/30 to-gray-300/30';
+                } else if (position === 3) {
+                    medal = '🥉';
+                    bgColor = 'bg-gradient-to-r from-orange-600/30 to-orange-500/30';
+                }
+
+                // Highlight current player
+                if (player.id === currentPlayer.id) {
+                    bgColor += ' ring-2 ring-purple-400';
+                }
+
+                const playerDiv = document.createElement('div');
+                playerDiv.className = `${bgColor} border border-gray-600 rounded-lg p-4 flex justify-between items-center`;
+                playerDiv.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <span class="text-2xl">${medal}</span>
+                        <div>
+                            <div class="font-bold text-white">
+                                ${position}. ${player.name}
+                                ${player.id === currentPlayer.id ? '<span class="text-purple-400 text-sm">(You)</span>' : ''}
+                            </div>
+                            <div class="text-gray-400 text-sm">
+                                ${player.answers.filter(a => a.isCorrect).length}/14 correct
+                                • Avg time: ${Math.round(player.answers.reduce((sum, a) => sum + (a.timeUsed || 0), 0) / player.answers.length)}s
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-yellow-400 font-bold text-xl">⭐ ${player.score}</div>
+                `;
+                leaderboard.appendChild(playerDiv);
+            });
+
+            // Add winner announcement
+            if (allPlayers.length > 0) {
+                const winner = allPlayers[0];
+                const announcement = document.createElement('div');
+                announcement.className = 'bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-purple-400 rounded-lg p-6 mb-6 text-center';
+                announcement.innerHTML = `
+                    <h3 class="text-2xl font-bold text-white mb-2">🎉 COSMIC CHAMPION 🎉</h3>
+                    <p class="text-xl text-purple-300">${winner.name} wins with ${winner.score} points!</p>
+                    <p class="text-sm text-gray-400 mt-2">
+                        ${winner.answers.filter(a => a.isCorrect).length}/14 correct answers
+                        • Average response time: ${Math.round(winner.answers.reduce((sum, a) => sum + (a.timeUsed || 0), 0) / winner.answers.length)}s
+                    </p>
+                `;
+                leaderboard.insertBefore(announcement, leaderboard.firstChild);
             }
 
-            players.forEach((player, index) => {
-                const entry = document.createElement('div');
-                entry.className = 'flex justify-between items-center text-white py-2 px-4 bg-white/5 rounded-lg';
-                
-                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-                
-                entry.innerHTML = `
-                    <span>${medal} ${player.name}</span>
-                    <span class="font-bold">${player.score}/13 (${player.percentage}%)</span>
-                `;
-                leaderboard.appendChild(entry);
-            });
+            // Show appropriate controls
+            if (isHost) {
+                document.getElementById('hostRestartControls').classList.remove('hidden');
+                document.getElementById('playerWaitingMessage').classList.add('hidden');
+            } else {
+                document.getElementById('hostRestartControls').classList.add('hidden');
+                document.getElementById('playerWaitingMessage').classList.remove('hidden');
+            }
         }
 
         function restartQuiz() {
+            if (!isHost) return;
+            
+            // Reset game state
             currentQuestionIndex = 0;
-            score = 0;
             selectedAnswer = null;
+            gameState = 'lobby';
+            
+            // Reset all players
+            allPlayers.forEach(player => {
+                player.score = 0;
+                player.answers = [];
+                player.isReady = true;
+            });
             
             document.getElementById('resultsScreen').classList.add('hidden');
-            document.getElementById('registrationScreen').classList.remove('hidden');
-            document.getElementById('playerName').value = '';
-            document.getElementById('currentScore').textContent = '0';
+            document.getElementById('lobbyScreen').classList.remove('hidden');
+            
+            updateLobby();
         }
 
-        // Simulate other players joining/completing
-        setInterval(() => {
-            if (Math.random() < 0.3) {
-                playerCount += Math.floor(Math.random() * 3);
-                if (playerCount > 50) playerCount = Math.floor(Math.random() * 20) + 30;
-                updatePlayerCount();
-            }
-        }, 5000);
+
+
+        // Initialize the app
+        createStars();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'971074a79523691c',t:'MTc1NTUxMDA4OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9720961632bac640',t:'MTc1NTY3OTIzMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
