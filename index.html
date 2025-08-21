@@ -121,7 +121,7 @@
                         <div class="text-xl text-purple-300 mb-6">
                             <span id="playerCount">0</span> / 50 Explorers Joined
                         </div>
-                        <div id="playersList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6 max-h-80 overflow-y-auto"></div>
+                        <div id="playersList" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 mb-6 max-h-96 overflow-y-auto"></div>
                         
                         <div class="bg-blue-600/20 border border-blue-400 rounded-lg p-4 mb-6">
                             <p class="text-blue-300 font-bold mb-2">📱 Share this link to invite friends:</p>
@@ -190,7 +190,7 @@
                     <div class="text-lg text-purple-300 mb-6">
                         <span id="totalParticipants">0</span> Space Explorers Completed the Mission
                     </div>
-                    <div id="leaderboard" class="space-y-4 max-h-96 overflow-y-auto"></div>
+                    <div id="leaderboard" class="space-y-2 max-h-[500px] overflow-y-auto"></div>
                 </div>
                 
                 <div id="hostRestartControls" class="hidden">
@@ -294,6 +294,8 @@
         let gameState = 'lobby'; // lobby, playing, results
         let questionTimer = null;
         let timeLeft = 30;
+        let gameSession = null;
+        let syncTimer = null;
 
         // Initialize stars
         function createStars() {
@@ -313,6 +315,111 @@
         function setupShareUrl() {
             const currentUrl = window.location.href;
             document.getElementById('currentUrl').textContent = currentUrl;
+        }
+
+        function saveGameState() {
+            if (!gameSession) return;
+            
+            const state = {
+                players: allPlayers,
+                gameState: gameState,
+                currentQuestion: currentQuestionIndex,
+                lastUpdate: Date.now()
+            };
+            
+            localStorage.setItem('quiz_' + gameSession, JSON.stringify(state));
+        }
+
+        function loadGameState() {
+            if (!gameSession) return false;
+            
+            const savedState = localStorage.getItem('quiz_' + gameSession);
+            if (!savedState) return false;
+            
+            const state = JSON.parse(savedState);
+            
+            // Update current player's last seen time
+            if (currentPlayer) {
+                const playerIndex = allPlayers.findIndex(p => p.id === currentPlayer.id);
+                if (playerIndex !== -1) {
+                    allPlayers[playerIndex].lastSeen = Date.now();
+                }
+            }
+            
+            // Check if state has changed
+            const stateChanged = 
+                state.gameState !== gameState ||
+                state.currentQuestion !== currentQuestionIndex ||
+                state.players.length !== allPlayers.length;
+            
+            if (stateChanged) {
+                allPlayers = state.players || [];
+                gameState = state.gameState || 'lobby';
+                currentQuestionIndex = state.currentQuestion || 0;
+                
+                // Find current player in updated list
+                if (currentPlayer) {
+                    const updatedPlayer = allPlayers.find(p => p.id === currentPlayer.id);
+                    if (updatedPlayer) {
+                        // Preserve local player data
+                        updatedPlayer.score = currentPlayer.score;
+                        updatedPlayer.answers = currentPlayer.answers;
+                        updatedPlayer.lastSeen = Date.now();
+                        currentPlayer = updatedPlayer;
+                    }
+                }
+                
+                return true;
+            }
+            
+            return false;
+        }
+
+        function startSync() {
+            if (syncTimer) clearInterval(syncTimer);
+            
+            syncTimer = setInterval(() => {
+                if (loadGameState()) {
+                    // State changed, update UI
+                    if (gameState === 'lobby') {
+                        if (!document.getElementById('lobbyScreen').classList.contains('hidden')) {
+                            updateLobby();
+                        } else {
+                            document.getElementById('quizScreen').classList.add('hidden');
+                            document.getElementById('resultsScreen').classList.add('hidden');
+                            document.getElementById('lobbyScreen').classList.remove('hidden');
+                            updateLobby();
+                        }
+                    } else if (gameState === 'playing') {
+                        if (!document.getElementById('quizScreen').classList.contains('hidden')) {
+                            // Update current question if needed
+                            if (document.getElementById('currentQuestion').textContent != (currentQuestionIndex + 1)) {
+                                showQuestion();
+                            }
+                        } else {
+                            document.getElementById('lobbyScreen').classList.add('hidden');
+                            document.getElementById('resultsScreen').classList.add('hidden');
+                            document.getElementById('quizScreen').classList.remove('hidden');
+                            showQuestion();
+                        }
+                    } else if (gameState === 'results') {
+                        if (!document.getElementById('resultsScreen').classList.contains('hidden')) {
+                            showLeaderboard();
+                        } else {
+                            document.getElementById('lobbyScreen').classList.add('hidden');
+                            document.getElementById('quizScreen').classList.add('hidden');
+                            document.getElementById('resultsScreen').classList.remove('hidden');
+                            showLeaderboard();
+                        }
+                    }
+                }
+                
+                // Update current player's last seen time
+                if (currentPlayer) {
+                    currentPlayer.lastSeen = Date.now();
+                    saveGameState();
+                }
+            }, 1000);
         }
 
         function copyToClipboard() {
@@ -344,6 +451,28 @@
                 return;
             }
 
+            // Get or create session from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            let sessionId = urlParams.get('session');
+            
+            if (!sessionId) {
+                // Create new session
+                sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const newUrl = window.location.origin + window.location.pathname + '?session=' + sessionId;
+                window.history.replaceState({}, '', newUrl);
+            }
+            
+            gameSession = sessionId;
+            
+            // Load existing game state from localStorage
+            const savedState = localStorage.getItem('quiz_' + gameSession);
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                allPlayers = state.players || [];
+                gameState = state.gameState || 'lobby';
+                currentQuestionIndex = state.currentQuestion || 0;
+            }
+
             // Check if name already exists
             if (allPlayers.some(p => p.name === name)) {
                 alert('That explorer name is already taken! Choose another.');
@@ -361,7 +490,8 @@
                 name: name,
                 score: 0,
                 answers: [],
-                isReady: true
+                isReady: true,
+                lastSeen: Date.now()
             };
 
             // First player becomes host
@@ -370,11 +500,24 @@
             }
 
             allPlayers.push(currentPlayer);
+            saveGameState();
             
             document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('lobbyScreen').classList.remove('hidden');
             
-            updateLobby();
+            // Check current game state
+            if (gameState === 'playing') {
+                document.getElementById('quizScreen').classList.remove('hidden');
+                showQuestion();
+            } else if (gameState === 'results') {
+                document.getElementById('resultsScreen').classList.remove('hidden');
+                showLeaderboard();
+            } else {
+                document.getElementById('lobbyScreen').classList.remove('hidden');
+                updateLobby();
+            }
+            
+            // Start syncing with other players
+            startSync();
         }
 
 
@@ -388,10 +531,10 @@
 
             allPlayers.forEach(player => {
                 const playerDiv = document.createElement('div');
-                playerDiv.className = 'bg-gray-700/50 border border-purple-500 rounded-lg p-2 text-center text-sm';
+                playerDiv.className = 'bg-gray-700/50 border border-purple-500 rounded-lg p-1.5 text-center text-xs';
                 playerDiv.innerHTML = `
-                    <div class="text-white font-bold">${player.name}</div>
-                    <div class="text-green-400 text-xs">✓ Ready</div>
+                    <div class="text-white font-bold truncate" title="${player.name}">${player.name}</div>
+                    <div class="text-green-400 text-xs">✓</div>
                 `;
                 playersList.appendChild(playerDiv);
             });
@@ -399,6 +542,10 @@
             // Setup share URL when first player joins
             if (allPlayers.length === 1) {
                 setupShareUrl();
+            } else {
+                // Update share URL with current session
+                const currentUrl = window.location.href;
+                document.getElementById('currentUrl').textContent = currentUrl;
             }
 
             // Show host controls if user is host and there are players
@@ -415,9 +562,6 @@
             
             gameState = 'playing';
             
-            document.getElementById('lobbyScreen').classList.add('hidden');
-            document.getElementById('quizScreen').classList.remove('hidden');
-            
             // Reset all player scores
             allPlayers.forEach(player => {
                 player.score = 0;
@@ -425,6 +569,11 @@
             });
             
             currentQuestionIndex = 0;
+            saveGameState();
+            
+            document.getElementById('lobbyScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            
             showQuestion();
         }
 
@@ -640,7 +789,10 @@
         }
 
         function nextQuestion() {
+            if (!isHost) return; // Only host can advance questions
+            
             currentQuestionIndex++;
+            saveGameState();
             
             if (currentQuestionIndex >= questions.length) {
                 finishQuiz();
@@ -654,6 +806,7 @@
             
             // Sort all players by score (highest first)
             allPlayers.sort((a, b) => b.score - a.score);
+            saveGameState();
             
             document.getElementById('quizScreen').classList.add('hidden');
             document.getElementById('resultsScreen').classList.remove('hidden');
@@ -690,22 +843,22 @@
                 }
 
                 const playerDiv = document.createElement('div');
-                playerDiv.className = `${bgColor} border border-gray-600 rounded-lg p-4 flex justify-between items-center`;
+                playerDiv.className = `${bgColor} border border-gray-600 rounded-lg p-3 flex justify-between items-center`;
                 playerDiv.innerHTML = `
-                    <div class="flex items-center space-x-4">
-                        <span class="text-2xl">${medal}</span>
-                        <div>
-                            <div class="font-bold text-white">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xl">${medal}</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="font-bold text-white text-sm truncate">
                                 ${position}. ${player.name}
-                                ${player.id === currentPlayer.id ? '<span class="text-purple-400 text-sm">(You)</span>' : ''}
+                                ${player.id === currentPlayer.id ? '<span class="text-purple-400 text-xs">(You)</span>' : ''}
                             </div>
-                            <div class="text-gray-400 text-sm">
+                            <div class="text-gray-400 text-xs">
                                 ${player.answers.filter(a => a.isCorrect).length}/14 correct
-                                • Avg time: ${Math.round(player.answers.reduce((sum, a) => sum + (a.timeUsed || 0), 0) / player.answers.length)}s
+                                • ${Math.round(player.answers.reduce((sum, a) => sum + (a.timeUsed || 0), 0) / player.answers.length)}s avg
                             </div>
                         </div>
                     </div>
-                    <div class="text-yellow-400 font-bold text-xl">⭐ ${player.score}</div>
+                    <div class="text-yellow-400 font-bold text-lg">⭐ ${player.score}</div>
                 `;
                 leaderboard.appendChild(playerDiv);
             });
@@ -751,6 +904,8 @@
                 player.isReady = true;
             });
             
+            saveGameState();
+            
             document.getElementById('resultsScreen').classList.add('hidden');
             document.getElementById('lobbyScreen').classList.remove('hidden');
             
@@ -762,5 +917,5 @@
         // Initialize the app
         createStars();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9720961632bac640',t:'MTc1NTY3OTIzMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97293ec9f22694ad',t:'MTc1NTc3MDAyNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
