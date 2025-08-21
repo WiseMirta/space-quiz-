@@ -327,7 +327,9 @@
         }
 
         function joinQuiz() {
+            console.log("joinQuiz() called"); // DEBUG 1
             const name = document.getElementById('playerName').value.trim();
+            console.log("Player name:", name); // DEBUG 2
             if (!name) {
                 alert('Please enter your space explorer name!');
                 return;
@@ -335,11 +337,15 @@
 
             const urlParams = new URLSearchParams(window.location.search);
             let sessionId = urlParams.get('session');
+            console.log("Session ID:", sessionId); // DEBUG 3
 
             socket.emit("joinSession", { playerName: name, sessionId: sessionId });
+            console.log("Emitted joinSession event"); // DEBUG 4
 
             document.getElementById('welcomeScreen').classList.add('hidden');
+            console.log("Welcome screen hidden"); // DEBUG 5
             document.getElementById('lobbyScreen').classList.remove('hidden');
+            console.log("Lobby screen shown"); // DEBUG 6
         }
 
         function updateLobby() {
