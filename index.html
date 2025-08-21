@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Quiz Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js" integrity="sha384-mZLF4UVwJ0k5nqVu8dWcZY6QQwCtVjL2uZY+gMMDqRYGjmtjy2qvK1PLlF9Vjzl4" crossorigin="anonymous"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"
+        integrity="sha384-mZLF4UVwJ0k5nqVu8dWcZY6QQwCtVjL2uZY+gMMDqRYGjmtjy2qvK1PLlF9Vjzl4"
+        crossorigin="anonymous"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
@@ -36,7 +39,8 @@
         }
 
         @keyframes twinkle {
-            0%, 100% {
+            0%,
+            100% {
                 opacity: 0.3;
             }
 
@@ -79,7 +83,8 @@
         }
 
         @keyframes float {
-            0%, 100% {
+            0%,
+            100% {
                 transform: translateY(0px);
             }
 
@@ -103,12 +108,22 @@
                     🚀 COSMIC QUIZ CHALLENGE 🌌
                 </h1>
 
-
                 <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 cosmic-glow mb-8">
                     <h2 class="text-2xl font-bold text-white mb-6">Enter Your Space Explorer Name</h2>
                     <input type="text" id="playerName" placeholder="Captain Stardust"
                         class="w-full max-w-md px-6 py-3 bg-gray-700/50 border border-purple-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 mb-6">
                     <br>
+
+                    <!-- Game Mode Selection -->
+                    <h2 class="text-2xl font-bold text-white mb-6">Select Game Mode</h2>
+                    <select id="gameMode"
+                        class="w-full max-w-md px-6 py-3 bg-gray-700/50 border border-purple-500 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-400 mb-6">
+                        <option value="normal">Normal</option>
+                        <option value="images">Images</option>
+                        <option value="planets">Planets</option>
+                    </select>
+                    <br>
+
                     <button onclick="joinQuiz()"
                         class="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 cosmic-glow">
                         🚀 Join Multiplayer Mission
@@ -160,8 +175,6 @@
                     </div>
                 </div>
             </div>
-
-
 
             <!-- Quiz Screen -->
             <div id="quizScreen" class="hidden">
@@ -328,10 +341,14 @@
                 return;
             }
 
+            // Get the selected game mode
+            const gameMode = document.getElementById('gameMode').value;
+
             const urlParams = new URLSearchParams(window.location.search);
             let sessionId = urlParams.get('session');
 
-            socket.emit("joinSession", { playerName: name, sessionId: sessionId });
+            // Send the gameMode to the server
+            socket.emit("joinSession", { playerName: name, sessionId: sessionId, gameMode: gameMode });
 
             document.getElementById('welcomeScreen').classList.add('hidden');
             document.getElementById('lobbyScreen').classList.remove('hidden');
@@ -467,4 +484,25 @@
                             <ellipse cx="30" cy="30" rx="25" ry="4" fill="none" stroke="#4FD0E7" stroke-width="1" opacity="0.4" transform="rotate(45 30 30)"/>
                         </svg>`;
                     } else if (planetName.includes('earth')) {
-                        planetImage = `<img src="https://tse3.mm.bing.net/th/id/OIP.-bluNjlpoAL0dHd1xt92JAHaFN?rs=1&pid=ImgDetMain&o=7&rm=3" width="60" height
+                        planetImage = `<img src="https://tse3.mm.bing.net/th/id/OIP.-bluNjlpoAL0dHd1xt92JAHaFN?rs=1&pid=ImgDetMain&o=7&rm=3" width="60" height="60" class="inline-block mr-3 rounded-full object-cover" alt="Earth">`;
+                    } else {
+                        planetImage = `<img src="https://static.vecteezy.com/system/resources/previews/008/055/235/original/planet-icon-isolated-on-white-background-vector.jpg" width="60" height="60" class="inline-block mr-3 rounded-full object-cover" alt="Planet">`;
+                    }
+
+                    button.innerHTML = `<div class="flex items-center">${planetImage}<span>${String.fromCharCode(65 + index)}. ${answer}</span></div>`;
+                } else {
+                    button.textContent = String.fromCharCode(65 + index) + '. ' + answer;
+                }
+
+                button.onclick = () => selectAnswer(index);
+                container.appendChild(button);
+            });
+
+            startTimer();
+        }
+
+        createStars();
+    </script>
+</body>
+
+</html>
