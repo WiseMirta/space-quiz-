@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Quiz Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js" integrity="sha384-mZLF4UVwJ0k5nqVu8dWcZY6QQwCtVjL2uZY+gMMDqRYGjmtjy2qvK1PLlF9Vjzl4" crossorigin="anonymous"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
-        
+
         body {
             font-family: 'Orbitron', monospace;
             background: linear-gradient(135deg, #0c0c2e 0%, #1a1a4a 50%, #2d1b69 100%);
@@ -16,7 +17,7 @@
             position: relative;
             overflow-x: hidden;
         }
-        
+
         .stars {
             position: fixed;
             top: 0;
@@ -26,34 +27,39 @@
             pointer-events: none;
             z-index: 1;
         }
-        
+
         .star {
             position: absolute;
             background: white;
             border-radius: 50%;
             animation: twinkle 3s infinite;
         }
-        
+
         @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
+            0%, 100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 1;
+            }
         }
-        
+
         .content {
             position: relative;
             z-index: 10;
         }
-        
+
         .cosmic-glow {
             box-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
         }
-        
+
         .planet {
             position: absolute;
             border-radius: 50%;
             opacity: 0.1;
         }
-        
+
         .planet-1 {
             width: 100px;
             height: 100px;
@@ -62,7 +68,7 @@
             right: 10%;
             animation: float 6s ease-in-out infinite;
         }
-        
+
         .planet-2 {
             width: 150px;
             height: 150px;
@@ -71,18 +77,24 @@
             left: 5%;
             animation: float 8s ease-in-out infinite reverse;
         }
-        
+
         @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
+            0%, 100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="stars" id="stars"></div>
     <div class="planet planet-1"></div>
     <div class="planet planet-2"></div>
-    
+
     <div class="content min-h-screen flex items-center justify-center p-4">
         <div class="w-full max-w-4xl">
             <!-- Welcome Screen -->
@@ -91,18 +103,18 @@
                     🚀 COSMIC QUIZ CHALLENGE 🌌
                 </h1>
 
-                
+
                 <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 cosmic-glow mb-8">
                     <h2 class="text-2xl font-bold text-white mb-6">Enter Your Space Explorer Name</h2>
-                    <input type="text" id="playerName" placeholder="Captain Stardust" 
-                           class="w-full max-w-md px-6 py-3 bg-gray-700/50 border border-purple-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 mb-6">
+                    <input type="text" id="playerName" placeholder="Captain Stardust"
+                        class="w-full max-w-md px-6 py-3 bg-gray-700/50 border border-purple-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 mb-6">
                     <br>
-                    <button onclick="joinQuiz()" 
-                            class="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 cosmic-glow">
+                    <button onclick="joinQuiz()"
+                        class="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 cosmic-glow">
                         🚀 Join Multiplayer Mission
                     </button>
                 </div>
-                
+
                 <div class="text-gray-400">
                     <p>⭐ Points awarded for correct answers</p>
                     <p>🏆 Winner announced at mission end</p>
@@ -114,31 +126,35 @@
                 <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400 mb-8">
                     🛸 MISSION LOBBY 🛸
                 </h1>
-                
+
                 <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 cosmic-glow mb-8">
                     <div class="text-center mb-8">
                         <h3 class="text-2xl font-bold text-white mb-6">🚀 Mission Crew</h3>
                         <div class="text-xl text-purple-300 mb-6">
                             <span id="playerCount">0</span> / 50 Explorers Joined
                         </div>
-                        <div id="playersList" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 mb-6 max-h-96 overflow-y-auto"></div>
-                        
+                        <div id="playersList"
+                            class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 mb-6 max-h-96 overflow-y-auto">
+                        </div>
+
                         <div class="bg-blue-600/20 border border-blue-400 rounded-lg p-4 mb-6">
                             <p class="text-blue-300 font-bold mb-2">📱 Share this link to invite friends:</p>
-                            <div class="bg-gray-700/50 rounded-lg p-3 text-sm text-gray-300 break-all select-all cursor-pointer" onclick="copyToClipboard()" id="shareUrl">
+                            <div class="bg-gray-700/50 rounded-lg p-3 text-sm text-gray-300 break-all select-all cursor-pointer"
+                                onclick="copyToClipboard()" id="shareUrl">
                                 <span id="currentUrl"></span>
                             </div>
-                            <p class="text-xs text-blue-400 mt-2">Click to copy • Share with other players to join the mission!</p>
+                            <p class="text-xs text-blue-400 mt-2">Click to copy • Share with other players to join the
+                                mission!</p>
                         </div>
                     </div>
-                    
+
                     <div id="hostControls" class="hidden space-y-4">
-                        <button onclick="startMultiplayerQuiz()" 
-                                class="px-8 py-4 bg-gradient-to-r from-green-600 to-blue-600 text-white font-bold rounded-lg hover:from-green-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 cosmic-glow">
+                        <button onclick="startMultiplayerQuiz()"
+                            class="px-8 py-4 bg-gradient-to-r from-green-600 to-blue-600 text-white font-bold rounded-lg hover:from-green-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 cosmic-glow">
                             🚀 Launch Quiz for All Explorers
                         </button>
                     </div>
-                    
+
                     <div id="waitingMessage" class="text-yellow-400 font-bold">
                         Waiting for mission commander to launch the quiz...
                     </div>
@@ -158,21 +174,23 @@
                             ⭐ Your Score: <span id="currentScore">0</span>
                         </div>
                     </div>
-                    
+
                     <div class="w-full bg-gray-700 rounded-full h-3 mb-4">
-                        <div id="progressBar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500" style="width: 7.69%"></div>
+                        <div id="progressBar"
+                            class="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500"
+                            style="width: 7.69%"></div>
                     </div>
-                    
+
                     <div id="timerContainer" class="text-center mb-6">
                         <div class="text-2xl font-bold text-red-400">
                             ⏰ Time: <span id="timer">30</span>s
                         </div>
                     </div>
-                    
+
                     <h2 id="questionText" class="text-2xl font-bold text-white mb-8 leading-relaxed"></h2>
-                    
+
                     <div id="answersContainer" class="space-y-4 mb-8"></div>
-                    
+
                     <div id="waitingForNext" class="hidden text-center text-yellow-400 font-bold">
                         Waiting for all explorers to answer... 🚀
                     </div>
@@ -184,7 +202,7 @@
                 <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 mb-8">
                     🏆 MISSION COMPLETE! 🏆
                 </h1>
-                
+
                 <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 cosmic-glow mb-8">
                     <h2 class="text-3xl font-bold text-white mb-6">Final Leaderboard</h2>
                     <div class="text-lg text-purple-300 mb-6">
@@ -192,14 +210,14 @@
                     </div>
                     <div id="leaderboard" class="space-y-2 max-h-[500px] overflow-y-auto"></div>
                 </div>
-                
+
                 <div id="hostRestartControls" class="hidden">
-                    <button onclick="restartQuiz()" 
-                            class="px-8 py-4 bg-gradient-to-r from-green-600 to-blue-600 text-white font-bold rounded-lg hover:from-green-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 cosmic-glow">
+                    <button onclick="restartQuiz()"
+                        class="px-8 py-4 bg-gradient-to-r from-green-600 to-blue-600 text-white font-bold rounded-lg hover:from-green-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 cosmic-glow">
                         🔄 New Mission
                     </button>
                 </div>
-                
+
                 <div id="playerWaitingMessage" class="text-yellow-400 font-bold">
                     Mission complete! Waiting for commander to start new mission...
                 </div>
@@ -208,94 +226,16 @@
     </div>
 
     <script>
-        // Quiz data
-        const questions = [
-            {
-                question: "Which type of star can end its life in a pair-instability supernova?",
-                answers: ["Red Dwarf", "Wolf–Rayet Star", "Neutron Star", "White Dwarf"],
-                correct: 1
-            },
-            {
-                question: "Which moon of Jupiter has the smoothest surface in the Solar System due to constant resurfacing by ice?",
-                answers: ["Io", "Ganymede", "Callisto", "Europa"],
-                correct: 3
-            },
-            {
-                question: "What is the approximate radius of the observable universe?",
-                answers: ["4.6 billion light-years", "13.8 billion light-years", "23.1 billion light-years", "46.5 billion light-years"],
-                correct: 3
-            },
-            {
-                question: "Which organism has been shown to survive direct exposure to the vacuum of space for over a week?",
-                answers: ["Deinococcus radiodurans", "Tardigrades", "Halobacterium salinarum", "Bacillus subtilis"],
-                correct: 1
-            },
-            {
-                question: "Olympus Mons, the tallest known mountain in the Solar System, is located on:",
-                answers: ["Mars", "Venus", "Io", "Ceres"],
-                correct: 0,
-                hasPlanets: true
-            },
-            {
-                question: "What was the first spacecraft to successfully land on the surface of Venus?",
-                answers: ["Venera 7", "Mariner 10", "Pioneer Venus", "Vega 1"],
-                correct: 0
-            },
-            {
-                question: "In microgravity, the human heart over long-duration missions tends to:",
-                answers: ["Become denser and stronger", "Lose mass and become more spherical", "Gain mass due to increased blood volume", "Shift position toward the lungs"],
-                correct: 1
-            },
-            {
-                question: "The largest canyon system in the Solar System, Valles Marineris, is located on:",
-                answers: ["Mercury", "Mars", "Ganymede", "Earth"],
-                correct: 1,
-                hasPlanets: true
-            },
-            {
-                question: "The \"space anemia\" observed in astronauts is caused by:",
-                answers: ["Destruction of red blood cells due to radiation", "Reduced production of erythropoietin", "Redistribution of fluids causing altered red cell counts", "Accelerated breakdown of red blood cells"],
-                correct: 3
-            },
-            {
-                question: "Which galaxy cluster is the largest gravitationally bound structure known?",
-                answers: ["Virgo Cluster", "Coma Cluster", "Hercules–Corona Borealis Great Wall", "Laniakea Supercluster"],
-                correct: 3
-            },
-            {
-                question: "Which moon of Saturn has liquid hydrocarbon lakes on its surface?",
-                answers: ["Enceladus", "Titan", "Mimas", "Iapetus"],
-                correct: 1
-            },
-            {
-                question: "Which is the best Portuguese pastry?",
-                answers: ["Pastel de Nata", "Pastel de Tentúgal", "Bola de Berlim", "Bolo de Arroz"],
-                correct: 1,
-                hasImages: true
-            },
-            {
-                question: "Which NASA experiment compared identical twins to study the effects of spaceflight on gene expression?",
-                answers: ["BioSentinel", "Twins Study", "BioAstronautics Program", "GeneLab Pathfinder"],
-                correct: 1
-            },
-            {
-                question: "Where was the biggest wave ever surfed?",
-                answers: ["Nazaré, Portugal", "Ericeira, Portugal", "Peniche, Portugal", "Sagres, Portugal"],
-                correct: 0
-            }
-        ];
-
         // Game state
         let allPlayers = [];
         let currentPlayer = null;
         let currentQuestionIndex = 0;
         let selectedAnswer = null;
-        let isHost = false;
+        let questions = []; // Questions will come from the server
         let gameState = 'lobby'; // lobby, playing, results
         let questionTimer = null;
         let timeLeft = 30;
         let gameSession = null;
-        let syncTimer = null;
 
         // Initialize stars
         function createStars() {
@@ -317,110 +257,47 @@
             document.getElementById('currentUrl').textContent = currentUrl;
         }
 
-        function saveGameState() {
-            if (!gameSession) return;
-            
-            const state = {
-                players: allPlayers,
-                gameState: gameState,
-                currentQuestion: currentQuestionIndex,
-                lastUpdate: Date.now()
-            };
-            
-            localStorage.setItem('quiz_' + gameSession, JSON.stringify(state));
-        }
+        // Socket.IO connection
+        const socket = io('http://localhost:3000'); // Replace with your server URL
 
-        function loadGameState() {
-            if (!gameSession) return false;
-            
-            const savedState = localStorage.getItem('quiz_' + gameSession);
-            if (!savedState) return false;
-            
-            const state = JSON.parse(savedState);
-            
-            // Update current player's last seen time
-            if (currentPlayer) {
-                const playerIndex = allPlayers.findIndex(p => p.id === currentPlayer.id);
-                if (playerIndex !== -1) {
-                    allPlayers[playerIndex].lastSeen = Date.now();
-                }
-            }
-            
-            // Check if state has changed
-            const stateChanged = 
-                state.gameState !== gameState ||
-                state.currentQuestion !== currentQuestionIndex ||
-                state.players.length !== allPlayers.length;
-            
-            if (stateChanged) {
-                allPlayers = state.players || [];
-                gameState = state.gameState || 'lobby';
-                currentQuestionIndex = state.currentQuestion || 0;
-                
-                // Find current player in updated list
-                if (currentPlayer) {
-                    const updatedPlayer = allPlayers.find(p => p.id === currentPlayer.id);
-                    if (updatedPlayer) {
-                        // Preserve local player data
-                        updatedPlayer.score = currentPlayer.score;
-                        updatedPlayer.answers = currentPlayer.answers;
-                        updatedPlayer.lastSeen = Date.now();
-                        currentPlayer = updatedPlayer;
-                    }
-                }
-                
-                return true;
-            }
-            
-            return false;
-        }
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
 
-        function startSync() {
-            if (syncTimer) clearInterval(syncTimer);
-            
-            syncTimer = setInterval(() => {
-                if (loadGameState()) {
-                    // State changed, update UI
-                    if (gameState === 'lobby') {
-                        if (!document.getElementById('lobbyScreen').classList.contains('hidden')) {
-                            updateLobby();
-                        } else {
-                            document.getElementById('quizScreen').classList.add('hidden');
-                            document.getElementById('resultsScreen').classList.add('hidden');
-                            document.getElementById('lobbyScreen').classList.remove('hidden');
-                            updateLobby();
-                        }
-                    } else if (gameState === 'playing') {
-                        if (!document.getElementById('quizScreen').classList.contains('hidden')) {
-                            // Update current question if needed
-                            if (document.getElementById('currentQuestion').textContent != (currentQuestionIndex + 1)) {
-                                showQuestion();
-                            }
-                        } else {
-                            document.getElementById('lobbyScreen').classList.add('hidden');
-                            document.getElementById('resultsScreen').classList.add('hidden');
-                            document.getElementById('quizScreen').classList.remove('hidden');
-                            showQuestion();
-                        }
-                    } else if (gameState === 'results') {
-                        if (!document.getElementById('resultsScreen').classList.contains('hidden')) {
-                            showLeaderboard();
-                        } else {
-                            document.getElementById('lobbyScreen').classList.add('hidden');
-                            document.getElementById('quizScreen').classList.add('hidden');
-                            document.getElementById('resultsScreen').classList.remove('hidden');
-                            showLeaderboard();
-                        }
-                    }
-                }
-                
-                // Update current player's last seen time
-                if (currentPlayer) {
-                    currentPlayer.lastSeen = Date.now();
-                    saveGameState();
-                }
-            }, 1000);
-        }
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+        });
+
+        socket.on("sessionUpdate", (session) => {
+            console.log("Session updated", session);
+            allPlayers = session.players;
+            gameState = session.gameState;
+            questions = session.questions;
+
+            if (gameState === 'lobby') {
+                document.getElementById('quizScreen').classList.add('hidden');
+                document.getElementById('resultsScreen').classList.add('hidden');
+                document.getElementById('lobbyScreen').classList.remove('hidden');
+                updateLobby();
+            } else if (gameState === 'playing') {
+                document.getElementById('lobbyScreen').classList.add('hidden');
+                document.getElementById('resultsScreen').classList.add('hidden');
+                document.getElementById('quizScreen').classList.remove('hidden');
+            } else if (gameState === 'results') {
+                document.getElementById('lobbyScreen').classList.add('hidden');
+                document.getElementById('quizScreen').classList.add('hidden');
+                document.getElementById('resultsScreen').classList.remove('hidden');
+                showLeaderboard();
+            }
+        });
+
+        socket.on("nextQuestion", (question) => {
+            showQuestion(question);
+        });
+
+        socket.on("joinFailed", (data) => {
+            alert(data.message);
+        });
 
         function copyToClipboard() {
             const url = document.getElementById('currentUrl').textContent;
@@ -429,7 +306,7 @@
                 const shareDiv = document.getElementById('shareUrl');
                 const originalClass = shareDiv.className;
                 shareDiv.className = originalClass + ' bg-green-600/30 border-green-400';
-                
+
                 setTimeout(() => {
                     shareDiv.className = originalClass;
                 }, 1000);
@@ -451,81 +328,19 @@
                 return;
             }
 
-            // Get or create session from URL
             const urlParams = new URLSearchParams(window.location.search);
             let sessionId = urlParams.get('session');
-            
-            if (!sessionId) {
-                // Create new session
-                sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                const newUrl = window.location.origin + window.location.pathname + '?session=' + sessionId;
-                window.history.replaceState({}, '', newUrl);
-            }
-            
-            gameSession = sessionId;
-            
-            // Load existing game state from localStorage
-            const savedState = localStorage.getItem('quiz_' + gameSession);
-            if (savedState) {
-                const state = JSON.parse(savedState);
-                allPlayers = state.players || [];
-                gameState = state.gameState || 'lobby';
-                currentQuestionIndex = state.currentQuestion || 0;
-            }
 
-            // Check if name already exists
-            if (allPlayers.some(p => p.name === name)) {
-                alert('That explorer name is already taken! Choose another.');
-                return;
-            }
+            socket.emit("joinSession", { playerName: name, sessionId: sessionId });
 
-            // Check if lobby is full
-            if (allPlayers.length >= 50) {
-                alert('Mission is full! Maximum 50 explorers allowed.');
-                return;
-            }
-
-            currentPlayer = {
-                id: Date.now() + Math.random(),
-                name: name,
-                score: 0,
-                answers: [],
-                isReady: true,
-                lastSeen: Date.now()
-            };
-
-            // First player becomes host
-            if (allPlayers.length === 0) {
-                isHost = true;
-            }
-
-            allPlayers.push(currentPlayer);
-            saveGameState();
-            
             document.getElementById('welcomeScreen').classList.add('hidden');
-            
-            // Check current game state
-            if (gameState === 'playing') {
-                document.getElementById('quizScreen').classList.remove('hidden');
-                showQuestion();
-            } else if (gameState === 'results') {
-                document.getElementById('resultsScreen').classList.remove('hidden');
-                showLeaderboard();
-            } else {
-                document.getElementById('lobbyScreen').classList.remove('hidden');
-                updateLobby();
-            }
-            
-            // Start syncing with other players
-            startSync();
+            document.getElementById('lobbyScreen').classList.remove('hidden');
         }
-
-
 
         function updateLobby() {
             const playersList = document.getElementById('playersList');
             const playerCount = document.getElementById('playerCount');
-            
+
             playersList.innerHTML = '';
             playerCount.textContent = allPlayers.length;
 
@@ -549,40 +364,21 @@
             }
 
             // Show host controls if user is host and there are players
-            if (isHost && allPlayers.length > 0) {
+            if (allPlayers.length > 0) {
                 document.getElementById('hostControls').classList.remove('hidden');
                 document.getElementById('waitingMessage').classList.add('hidden');
             }
         }
 
-
-
         function startMultiplayerQuiz() {
-            if (!isHost) return;
-            
-            gameState = 'playing';
-            
-            // Reset all player scores
-            allPlayers.forEach(player => {
-                player.score = 0;
-                player.answers = [];
-            });
-            
-            currentQuestionIndex = 0;
-            saveGameState();
-            
-            document.getElementById('lobbyScreen').classList.add('hidden');
-            document.getElementById('quizScreen').classList.remove('hidden');
-            
-            showQuestion();
+            socket.emit("startGame");
         }
 
-        function showQuestion() {
-            const question = questions[currentQuestionIndex];
+        function showQuestion(question) {
             document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
             document.getElementById('questionText').textContent = question.question;
             document.getElementById('currentScore').textContent = currentPlayer.score;
-            
+
             const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
             document.getElementById('progressBar').style.width = progress + '%';
 
@@ -593,7 +389,7 @@
             question.answers.forEach((answer, index) => {
                 const button = document.createElement('button');
                 button.className = 'w-full p-4 text-left bg-gray-700/50 border border-gray-600 rounded-lg text-white hover:bg-purple-600/30 hover:border-purple-400 transition-all duration-200';
-                
+
                 if (question.hasImages) {
                     // Create pastry images using high-quality photos
                     let pastryImage = '';
@@ -611,7 +407,7 @@
                     // Add planet images for space questions
                     let planetImage = '';
                     const planetName = answer.toLowerCase();
-                    
+
                     if (planetName.includes('venus')) {
                         planetImage = `<img src="https://image.emojipng.com/220/2013220.jpg" width="60" height="60" class="inline-block mr-3 rounded-full object-cover" alt="Venus">`;
                     } else if (planetName.includes('mars')) {
@@ -671,251 +467,4 @@
                             <ellipse cx="30" cy="30" rx="25" ry="4" fill="none" stroke="#4FD0E7" stroke-width="1" opacity="0.4" transform="rotate(45 30 30)"/>
                         </svg>`;
                     } else if (planetName.includes('earth')) {
-                        planetImage = `<img src="https://tse3.mm.bing.net/th/id/OIP.-bluNjlpoAL0dHd1xt92JAHaFN?rs=1&pid=ImgDetMain&o=7&rm=3" width="60" height="60" class="inline-block mr-3 rounded-full object-cover" alt="Earth">`;
-                    } else {
-                        // Default space icon for non-planet answers
-                        planetImage = `<svg width="60" height="60" viewBox="0 0 60 60" class="inline-block mr-3">
-                            <circle cx="30" cy="30" r="25" fill="url(#spaceGradient${index})" stroke="#4B0082" stroke-width="2"/>
-                            <defs>
-                                <radialGradient id="spaceGradient${index}" cx="0.3" cy="0.3">
-                                    <stop offset="0%" stop-color="#9370DB"/>
-                                    <stop offset="100%" stop-color="#2F1B69"/>
-                                </radialGradient>
-                            </defs>
-                            <circle cx="22" cy="22" r="1" fill="white"/>
-                            <circle cx="38" cy="25" r="0.8" fill="white"/>
-                            <circle cx="25" cy="38" r="1.2" fill="white"/>
-                            <circle cx="40" cy="40" r="0.6" fill="white"/>
-                        </svg>`;
-                    }
-                    button.innerHTML = `<div class="flex items-center">${planetImage}<span>${String.fromCharCode(65 + index)}. ${answer}</span></div>`;
-                } else {
-                    button.textContent = `${String.fromCharCode(65 + index)}. ${answer}`;
-                }
-                
-                button.onclick = () => selectAnswer(index, button);
-                container.appendChild(button);
-            });
-
-            document.getElementById('waitingForNext').classList.add('hidden');
-            
-            // Start timer
-            timeLeft = 30;
-            updateTimer();
-            questionTimer = setInterval(() => {
-                timeLeft--;
-                updateTimer();
-                
-                if (timeLeft <= 0) {
-                    clearInterval(questionTimer);
-                    if (selectedAnswer === null) {
-                        // Auto-submit with no answer
-                        selectAnswer(-1, null);
-                    }
-                }
-            }, 1000);
-        }
-
-        function updateTimer() {
-            const timerElement = document.getElementById('timer');
-            timerElement.textContent = timeLeft;
-            
-            if (timeLeft <= 10) {
-                timerElement.className = 'text-red-500 animate-pulse';
-            } else if (timeLeft <= 20) {
-                timerElement.className = 'text-yellow-400';
-            } else {
-                timerElement.className = 'text-green-400';
-            }
-        }
-
-        function selectAnswer(answerIndex, buttonElement) {
-            if (selectedAnswer !== null) return; // Already answered
-            
-            clearInterval(questionTimer);
-            selectedAnswer = answerIndex;
-            const question = questions[currentQuestionIndex];
-            const isCorrect = answerIndex === question.correct && answerIndex !== -1;
-
-            // Calculate points based on time remaining (bonus for speed)
-            let points = 0;
-            if (isCorrect) {
-                points = 10 + Math.floor(timeLeft / 3); // Base 10 + speed bonus
-            }
-
-            currentPlayer.score += points;
-
-            // Always show correct answer highlighting
-            const allButtons = document.querySelectorAll('#answersContainer button');
-            
-            // Reset all buttons first
-            allButtons.forEach(btn => {
-                btn.classList.remove('bg-green-600/50', 'bg-red-600/50', 'border-green-400', 'border-red-400');
-                btn.classList.add('bg-gray-700/50', 'border-gray-600');
-            });
-
-            // Highlight the correct answer in green
-            allButtons[question.correct].classList.remove('bg-gray-700/50', 'border-gray-600');
-            allButtons[question.correct].classList.add('bg-green-600/50', 'border-green-400');
-
-            // If user selected an answer and it was wrong, show it in red
-            if (answerIndex !== -1 && buttonElement && !isCorrect) {
-                buttonElement.classList.remove('bg-gray-700/50', 'border-gray-600');
-                buttonElement.classList.add('bg-red-600/50', 'border-red-400');
-            }
-
-            // Disable all buttons
-            document.querySelectorAll('#answersContainer button').forEach(btn => {
-                btn.disabled = true;
-                btn.classList.add('cursor-not-allowed');
-            });
-
-            currentPlayer.answers.push({
-                question: currentQuestionIndex,
-                selected: answerIndex,
-                correct: question.correct,
-                isCorrect: isCorrect,
-                points: points,
-                timeUsed: 30 - timeLeft
-            });
-
-            document.getElementById('currentScore').textContent = currentPlayer.score;
-            document.getElementById('waitingForNext').classList.remove('hidden');
-            
-            // Auto-advance after 3 seconds
-            setTimeout(() => {
-                nextQuestion();
-            }, 3000);
-        }
-
-        function nextQuestion() {
-            if (!isHost) return; // Only host can advance questions
-            
-            currentQuestionIndex++;
-            saveGameState();
-            
-            if (currentQuestionIndex >= questions.length) {
-                finishQuiz();
-            } else {
-                showQuestion();
-            }
-        }
-
-        function finishQuiz() {
-            gameState = 'results';
-            
-            // Sort all players by score (highest first)
-            allPlayers.sort((a, b) => b.score - a.score);
-            saveGameState();
-            
-            document.getElementById('quizScreen').classList.add('hidden');
-            document.getElementById('resultsScreen').classList.remove('hidden');
-            
-            showLeaderboard();
-        }
-
-        function showLeaderboard() {
-            const leaderboard = document.getElementById('leaderboard');
-            const totalParticipants = document.getElementById('totalParticipants');
-            
-            leaderboard.innerHTML = '';
-            totalParticipants.textContent = allPlayers.length;
-
-            allPlayers.forEach((player, index) => {
-                const position = index + 1;
-                let medal = '';
-                let bgColor = 'bg-gray-700/50';
-                
-                if (position === 1) {
-                    medal = '🥇';
-                    bgColor = 'bg-gradient-to-r from-yellow-600/30 to-yellow-500/30';
-                } else if (position === 2) {
-                    medal = '🥈';
-                    bgColor = 'bg-gradient-to-r from-gray-400/30 to-gray-300/30';
-                } else if (position === 3) {
-                    medal = '🥉';
-                    bgColor = 'bg-gradient-to-r from-orange-600/30 to-orange-500/30';
-                }
-
-                // Highlight current player
-                if (player.id === currentPlayer.id) {
-                    bgColor += ' ring-2 ring-purple-400';
-                }
-
-                const playerDiv = document.createElement('div');
-                playerDiv.className = `${bgColor} border border-gray-600 rounded-lg p-3 flex justify-between items-center`;
-                playerDiv.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <span class="text-xl">${medal}</span>
-                        <div class="min-w-0 flex-1">
-                            <div class="font-bold text-white text-sm truncate">
-                                ${position}. ${player.name}
-                                ${player.id === currentPlayer.id ? '<span class="text-purple-400 text-xs">(You)</span>' : ''}
-                            </div>
-                            <div class="text-gray-400 text-xs">
-                                ${player.answers.filter(a => a.isCorrect).length}/14 correct
-                                • ${Math.round(player.answers.reduce((sum, a) => sum + (a.timeUsed || 0), 0) / player.answers.length)}s avg
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-yellow-400 font-bold text-lg">⭐ ${player.score}</div>
-                `;
-                leaderboard.appendChild(playerDiv);
-            });
-
-            // Add winner announcement
-            if (allPlayers.length > 0) {
-                const winner = allPlayers[0];
-                const announcement = document.createElement('div');
-                announcement.className = 'bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-purple-400 rounded-lg p-6 mb-6 text-center';
-                announcement.innerHTML = `
-                    <h3 class="text-2xl font-bold text-white mb-2">🎉 COSMIC CHAMPION 🎉</h3>
-                    <p class="text-xl text-purple-300">${winner.name} wins with ${winner.score} points!</p>
-                    <p class="text-sm text-gray-400 mt-2">
-                        ${winner.answers.filter(a => a.isCorrect).length}/14 correct answers
-                        • Average response time: ${Math.round(winner.answers.reduce((sum, a) => sum + (a.timeUsed || 0), 0) / winner.answers.length)}s
-                    </p>
-                `;
-                leaderboard.insertBefore(announcement, leaderboard.firstChild);
-            }
-
-            // Show appropriate controls
-            if (isHost) {
-                document.getElementById('hostRestartControls').classList.remove('hidden');
-                document.getElementById('playerWaitingMessage').classList.add('hidden');
-            } else {
-                document.getElementById('hostRestartControls').classList.add('hidden');
-                document.getElementById('playerWaitingMessage').classList.remove('hidden');
-            }
-        }
-
-        function restartQuiz() {
-            if (!isHost) return;
-            
-            // Reset game state
-            currentQuestionIndex = 0;
-            selectedAnswer = null;
-            gameState = 'lobby';
-            
-            // Reset all players
-            allPlayers.forEach(player => {
-                player.score = 0;
-                player.answers = [];
-                player.isReady = true;
-            });
-            
-            saveGameState();
-            
-            document.getElementById('resultsScreen').classList.add('hidden');
-            document.getElementById('lobbyScreen').classList.remove('hidden');
-            
-            updateLobby();
-        }
-
-
-
-        // Initialize the app
-        createStars();
-    </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97293ec9f22694ad',t:'MTc1NTc3MDAyNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
-</html>
+                        planetImage = `<img src="https://tse3.mm.bing.net/th/id/OIP.-bluNjlpoAL0dHd1xt92JAHaFN?rs=1&pid=ImgDetMain&o=7&rm=3" width="60" height
